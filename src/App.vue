@@ -1,16 +1,18 @@
 <template>
-  <div id="app">
-    <hello />
+  <div id="app" class='selectDisable'>
+    <!-- <hello /> -->
+    <home />
   </div>
 </template>
 
 <script>
 import Hello from './components/Hello.vue'
+import Home from './components/Home.vue'
 
 export default {
   name: 'app',
   components: {
-    Hello
+    Hello, Home
   }
 }
 </script>
@@ -26,5 +28,21 @@ export default {
     overflow-x: hidden;
     background-color:black;
   }
+
+  .selectDisable {
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+.selectEnable { 
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -o-user-select: text;
+    user-select: text;
+}
 </style>
 

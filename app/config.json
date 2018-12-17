@@ -1,6 +1,7 @@
 {
     "server":[
         {
+            "name":"Main Server",
             "type":"websocket", 
             "port":5000, 
             "forwardmessages":true,
@@ -10,11 +11,13 @@
         },
 
         {
+            "name":"Server Teste",
             "type":"websocket", 
             "port":5001, 
             "forwardmessages":true,
             "rooms":[
-                {"name":"games"}
+                {"name":"games"},
+                {"name":"dicas"}
             ]
         }
     ]
