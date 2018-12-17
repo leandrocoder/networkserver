@@ -1,0 +1,12 @@
+{
+  "name": "Server",
+  "version": "0.1.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "electron .",
+    "test":"node app nowindow"
+  },
+  "dependencies": {
+    "lcnet": "file:/jobs/github/npm-lcnet/"
+  }
+}

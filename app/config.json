@@ -1,0 +1,21 @@
+{
+    "server":[
+        {
+            "type":"websocket", 
+            "port":5000, 
+            "forwardmessages":true,
+            "rooms":[
+                {"name":"mmroom"}
+            ]
+        },
+
+        {
+            "type":"websocket", 
+            "port":5001, 
+            "forwardmessages":true,
+            "rooms":[
+                {"name":"games"}
+            ]
+        }
+    ]
+}
