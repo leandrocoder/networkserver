@@ -318,6 +318,7 @@ export default {
                 background-color: $blue;
                 border: none;
                 cursor: pointer;
+                color:white;
             }
         }
     }

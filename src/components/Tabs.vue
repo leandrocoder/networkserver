@@ -86,15 +86,15 @@ export default {
         .windowbuttons {
             position:relative;
             height:100%;
-            width:50px;
+            width:64px;
             display: flex;
             margin-right: 20px;
             justify-content:space-between;
         }
 
         .winbtn {
-            width:16px;
-            height:16px;
+            width:  18px;
+            height: 18px;
             background-color: yellow;
             border-radius: 100px;
             position:relative;
@@ -128,7 +128,8 @@ export default {
 
         .tab {
             position: relative;
-            width:150px;
+            width:128px;
+            min-width: 128px;
             height:100%;
             background-color: $darkBlue;
             margin-right:5px;

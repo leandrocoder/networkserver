@@ -54,37 +54,41 @@ module.exports = class App extends EventEmitter
 
         for (let i = 0; i < config.server.length; i++)
         {
-            let s = new LCNetServer(config.server[i].type, config.server[i].port)
-            s.config = config.server[i];
-            s.id = i;
-            s.clients = [];
-            s.messageLog = [];
-            s.rooms = [];
-            s.name = "[ all ]";
-            s.defaultRoom = new Room('all');
-
-            s.getRoom = function(name)
+            if (config.server[i].type == 'websocket')
             {
-                for (let j = 0; j < s.rooms.length; j++)
+
+                let s = new LCNetServer(config.server[i].type, config.server[i].port);
+                s.config = config.server[i];
+                s.id = i;
+                s.clients = [];
+                s.messageLog = [];
+                s.rooms = [];
+                s.name = "[ all ]";
+                s.defaultRoom = new Room('all');
+
+                s.getRoom = function(name)
                 {
-                    if (s.rooms[j].name == name)
+                    for (let j = 0; j < s.rooms.length; j++)
                     {
-                        return s.rooms[j];
+                        if (s.rooms[j].name == name)
+                        {
+                            return s.rooms[j];
+                        }
                     }
+                    return null;
                 }
-                return null;
+
+                for (let j = 0; j < s.config.rooms.length; j++)
+                {
+                    s.rooms.push(new Room(s.config.rooms[j].name));
+                }       
+
+                s.forwardMessages = config.server[i].forwardmessages
+                s.on("connect", (client) => this.onConnect(s, client))
+                s.on("close", (client) => this.onClose(s, client))
+                s.on("message", (data, sender) => this.onMessage(s, data, sender))
+                this.server.push(s);
             }
-
-            for (let j = 0; j < s.config.rooms.length; j++)
-            {
-                s.rooms.push(new Room(s.config.rooms[j].name));
-            }       
-
-            s.forwardMessages = config.server[i].forwardmessages
-            s.on("connect", (client) => this.onConnect(s, client))
-            s.on("close", (client) => this.onClose(s, client))
-            s.on("message", (data, sender) => this.onMessage(s, data, sender))
-            this.server.push(s);
         }
     }
 

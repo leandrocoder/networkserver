@@ -11,6 +11,21 @@
                 {"name":"camera"},
                 {"name":"input"}
             ]
+        },
+
+        {
+            "name":"Takeaway 2",
+            "type":"websocket", 
+            "port":5001, 
+            "forwardmessages":false,
+            "rooms":[
+            ]
+        },
+
+        {
+            "name":"UDP",
+            "type":"udp",
+            "port":8002
         }
     ]
 }

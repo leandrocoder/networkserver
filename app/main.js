@@ -16,7 +16,13 @@ function initElectronView()
     let win = null;
 
     function createWindow () {
-        win = new BrowserWindow({ width: 1200, height: 600, frame: false })
+        win = new BrowserWindow({ 
+            minWidth:   800,
+            minHeight:  500,
+            width:      800,
+            height:     500,
+            frame:      false
+        })
         //win.loadFile('index.html');
         win.setMenu(null);
         win.loadURL('http://localhost:8080/') 
