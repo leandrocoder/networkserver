@@ -101,7 +101,11 @@ export default {
 
   mounted() {
 
+	  
+
 	this.app = remote.getGlobal('app');
+
+
 	
 	this.app.on("message", (server, data, sender) => this.updateData(server) );
 	this.app.on("close", (server, client) => this.updateData(server) );

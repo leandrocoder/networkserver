@@ -1,23 +1,12 @@
 {
     "server":[
         {
-            "name":"Main Server",
+            "name":"MMServer",
             "type":"websocket", 
             "port":5000, 
             "forwardmessages":true,
             "rooms":[
                 {"name":"mmroom"}
-            ]
-        },
-
-        {
-            "name":"Server Teste",
-            "type":"websocket", 
-            "port":5001, 
-            "forwardmessages":true,
-            "rooms":[
-                {"name":"games"},
-                {"name":"dicas"}
             ]
         }
     ]

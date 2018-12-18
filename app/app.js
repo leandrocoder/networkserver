@@ -1,66 +1,160 @@
-const Main = require('./main.js');
-const Config = require("./config.json");
+const LCNetServer = require('lcnet/server');
+const EventEmitter = require('events');
 
-//#region Start Electron
-
-var electronApp = true;
-process.argv.forEach(function (val, index, array) {
-    if (val == 'nowindow') electronApp = false;
-});
-
-function initElectronView()
+class Room  extends EventEmitter
 {
-    const { app, BrowserWindow } = require('electron')
-
-    let win
-
-    function createWindow () {
-        main();
-        win = new BrowserWindow({ width: 800, height: 600 })
-        //win.loadFile('index.html');
-        win.setMenu(null);
-        win.loadURL('http://localhost:8080/') 
-        win.webContents.openDevTools();
-        win.on('closed', () => {
-            win = null
-        })
+    constructor(name)
+    {
+        super();
+        this.name = name;
+        this.clients = [];
     }
 
-    app.on('ready', createWindow)
-
-    app.on('window-all-closed', () => {
-        if (process.platform !== 'darwin') {
-            app.quit()
+    addClient(client)
+    {
+        if (client.room != null) {
+            client.room.removeClient(client);
         }
-    })
-
-    app.on('activate', () => {
-        if (win === null) {
-            createWindow()
+        
+        for (let i = 0; i < this.clients.length; i++)
+        {
+            if (this.clients[i] != null && this.clients[i].id == client.id)
+                return false;
         }
-    })
+
+        client.room = this.name != 'all' ? this : null;
+        this.clients.push(client);
+        return true;
+    }
+
+    removeClient(client)
+    {
+        let index = -1;
+        for (let i = 0; i < this.clients.length; i++)
+        {
+            if (this.clients[i].id == client.id)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        if (index >= 0) this.clients.splice(index, 1);
+        client.room = null;
+        return index >= 0;
+    }
 }
 
-if (electronApp == true)
+module.exports = class App extends EventEmitter
 {
-    initElectronView();
-}
-else
-{
-    main();
-}
-//#endregion
+    constructor(config)
+    {
+        super();
+        this.server = [];
 
-// ========================================
+        for (let i = 0; i < config.server.length; i++)
+        {
+            let s = new LCNetServer(config.server[i].type, config.server[i].port)
+            s.config = config.server[i];
+            s.id = i;
+            s.clients = [];
+            s.messageLog = [];
+            s.rooms = [];
+            s.name = "[ all ]";
+            s.defaultRoom = new Room('all');
 
-function main()
-{
-    /*
-    global.config = Config;
-    console.log(global.config);
-    global.dataManager = new DataManager(global.config.type, global.config.port);
-    global.dataManager.init("websocket", 5000);
-    */
-   global.config = Config;
-   global.app = new Main();
+            s.getRoom = function(name)
+            {
+                for (let j = 0; j < s.rooms.length; j++)
+                {
+                    if (s.rooms[j].name == name)
+                    {
+                        return s.rooms[j];
+                    }
+                }
+                return null;
+            }
+
+            for (let j = 0; j < s.config.rooms.length; j++)
+            {
+                s.rooms.push(new Room(s.config.rooms[j].name));
+            }       
+
+            s.forwardMessages = config.server[i].forwardmessages
+            s.on("connect", (client) => this.onConnect(s, client))
+            s.on("close", (client) => this.onClose(s, client))
+            s.on("message", (data, sender) => this.onMessage(s, data, sender))
+            this.server.push(s);
+        }
+    }
+
+    getServer(name)
+    {
+        for (let i = 0; i < this.server.length; i++)
+        {
+            if (this.server[i] != null && this.server[i].config.name == name)
+            {
+                return this.server[i];
+            }
+        }
+        return null;
+    }
+
+    onConnect(server, client)
+    {
+        client.name = "Guest " + client.id;
+        server.defaultRoom.addClient(client);
+        console.log("connect: client", client.id);
+        this.emit("connect", server, client);
+    }
+    
+    onMessage(server, data, sender)
+    {
+        console.log("message >", data);
+
+        console.log("type of message = ", typeof data);
+
+        let json = null;
+        try {
+            json = JSON.parse(data);
+        } catch (err) {}
+
+        if (json && json.type == "server")
+        {
+            if (json.whoami)
+            {
+                sender.name = json.whoami;
+            }
+            else if (json.joinroom)
+            {
+                let room = server.getRoom(json.joinroom);
+                if (room) room.addClient(sender);
+            }
+            else if (json.leaveroom)
+            {
+                if (sender.room) sender.room.removeClient(sender);
+            }
+        }
+        
+        let timestamp = Date.now();
+        let time = new Date();
+        time = time.getHours() + ":"  + time.getMinutes() + ":" + time.getSeconds();
+        let messageData = {
+            message:data,
+            timestamp:timestamp,
+            time:time
+        }
+        server.messageLog.push(messageData);
+        this.emit("message", server, data, sender);
+    }
+    
+    onClose(server, client)
+    {
+        if (client && client.room)
+        {
+            client.room.removeClient(client);
+        }
+        server.defaultRoom.removeClient(client);
+        this.emit("close", server, client);
+    }
 }

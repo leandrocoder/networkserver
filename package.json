@@ -9,8 +9,8 @@
     "watchify": "watchify -vd -p browserify-hmr -e src/main.js -o dist/build.js",
     "serve": "http-server -o -c 1 -a localhost",
     "dev": "npm-run-all --parallel watchify serve",
-    "terminalapp": "node ./app/app.js nowindow",
-    "app": "electron ./app/",
+    "terminalapp": "node ./app/main.js nowindow",
+    "app": "electron ./app/ ../takeaway",
     "devapp": "npm-run-all -p -r dev app",
     "test": "npm-run-all devapp",
     "lint": "eslint --ext .js,.vue src",
@@ -33,7 +33,6 @@
     "vue": "vue/dist/vue.common.js"
   },
   "dependencies": {
-    "electron": "^3.0.12",
     "lcnet": "file:/jobs/github/npm-lcnet/",
     "vue": "^2.0.1"
   },

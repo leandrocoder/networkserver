@@ -9,12 +9,15 @@
 
 import Tabs from "./Tabs.vue";
 import Server from "./Server.vue";
+import Path from 'path';
+import FS from 'fs';
 
 const remote = window.require('electron').remote;
 
 export default {
 
 	data: () => ({
+
 		app:null,
 		currentServerIndex:0,
 		server:null,
@@ -26,8 +29,8 @@ export default {
 	},
 
 	mounted() {
-		this.app = remote.getGlobal('app');
 		
+		this.app = remote.getGlobal('app');
 
 		this.app.on('message', (server, data, sender) => {
 			if (this.server.id == server.id)

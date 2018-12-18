@@ -1,106 +1,90 @@
-const LCNetServer = require('lcnet/server');
-const EventEmitter = require('events');
+const App = require('./app.js');
 const Config = require("./config.json");
+const Path = require('path');
+const FS = require('fs');
 
-class Room  extends EventEmitter
+//#region Start Electron
+
+var electronApp = true;
+process.argv.forEach(function (val, index, array) {
+    if (val == 'nowindow') electronApp = false;
+});
+
+function initElectronView()
 {
-    constructor(name)
-    {
-        super();
-        this.name = name;
-        this.clients = [];
+    const { app, BrowserWindow } = require('electron')
+    let win = null;
+
+    function createWindow () {
+        win = new BrowserWindow({ width: 1200, height: 600, frame: false })
+        //win.loadFile('index.html');
+        win.setMenu(null);
+        win.loadURL('http://localhost:8080/') 
+        win.webContents.openDevTools();
+        win.setTitle("Server");
+        win.on('closed', () => {
+            win = null
+        })
+
+        main(win);
     }
 
-    addClient(client)
-    {
-        if (client.room != null) {
-            client.room.removeClient(client);
-        }
-        
-        for (let i = 0; i < this.clients.length; i++)
-        {
-            if (this.clients[i] != null && this.clients[i].id == client.id)
-                return false;
-        }
+    app.on('ready', createWindow)
 
-        this.clients.push(client);
-        return true;
-    }
-
-    removeClient(client)
-    {
-        let index = -1;
-        for (let i = 0; i < this.clients.length; i++)
-        {
-            if (this.clients[i].id == client.id)
-            {
-                index = i;
-                break;
-            }
+    app.on('window-all-closed', () => {
+        if (process.platform !== 'darwin') {
+            app.quit()
         }
+    })
 
-        if (index >= 0) this.clients.splice(index, 1);
-        return index >= 0;
-    }
+    app.on('activate', () => {
+        if (win === null) {
+            createWindow()
+        }
+    })
 }
 
-module.exports = class Main extends EventEmitter
+if (electronApp == true)
 {
-    constructor()
-    {
-        super();
-        this.server = [];
+    initElectronView();
+}
+else
+{
+    main();
+}
+//#endregion
 
-        for (let i = 0; i < Config.server.length; i++)
+// ========================================
+
+function main(electronWindow)
+{
+   global.args = [...process.argv];
+   global.args.unshift(__dirname);
+   global.config = Config;
+   global.extension = {};
+
+   
+   // LOAD EXTENSION
+   if (global.args.length >= 4)
+   {
+       global.extension.path = Path.join(__dirname, global.args[3]);
+       global.extension.config = require(Path.join(global.extension.path, "app.json"));
+       global.extension.scriptPath = Path.join(global.extension.path, global.extension.config.script);
+       global.extension.scriptClass = require(global.extension.scriptPath);
+
+        if (global.extension.config && global.extension.config.server)
         {
-            let s = new LCNetServer(Config.server[i].type, Config.server[i].port)
-            s.config = Config.server[i];
-            s.id = i;
-            s.clients = [];
-            s.messageLog = [];
-            s.defaultRoom = new Room('default');
-            s.rooms = [
-                s.defaultRoom
-            ];
-
-            for (let j = 0; j < s.config.rooms.length; j++)
-            {
-                s.rooms.push(new Room(s.config.rooms[j].name));
-            }
-
-            s.forwardMessages = Config.server[i].forwardmessages
-            s.on("connect", (client) => this.onConnect(s, client))
-            s.on("close", (client) => this.onConnect(s, client))
-            s.on("message", (data, sender) => this.onMessage(s, data, sender))
-            this.server.push(s);
+            global.config.server = global.extension.config.server;
         }
+
+        console.log("==== win ====", electronWindow);
+        if (electronWindow != null) electronWindow.setTitle(global.extension.config.title);
     }
 
-    onConnect(server, client)
+    global.app = new App(global.config);
+    if (global.extension.scriptClass != null)
     {
-        server.defaultRoom.addClient(client);
-        console.log("connect: client", client.id);
-        this.emit("connect", server, client);
-    }
-    
-    onMessage(server, data, sender)
-    {
-        console.log("message >", data);
-        
-        let timestamp = Date.now();
-        let time = new Date().toUTCString();
-        let messageData = {
-            message:data,
-            timestamp:timestamp,
-            time:time
-        }
-        server.messageLog.push(messageData);
-        this.emit("message", server, data, sender);
-    }
-    
-    onClose(server, client)
-    {
-        console.log("close: client", client.id);
-        this.emit("close", server, client);
+        let scriptClass = global.extension.scriptClass;
+        global.extension.script = new scriptClass(global.app);
     }
 }

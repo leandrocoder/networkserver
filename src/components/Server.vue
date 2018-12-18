@@ -4,18 +4,31 @@
         <div class='columns'>
             <div class='datacontainer'>
                 <h1>Rooms</h1>
-                <div class='item' v-for="(item, index) in rooms">{{item.name}}</div>
+                <div class='scoll'>
+                <div class='container'>
+                <div :class="index == selectedRoom ? 'itemselected' : 'item'" v-for="(item, index) in rooms" @click="onClickRoom(item, index)">{{item.name}}</div>
+                </div>
+                </div>
             </div>
             <div class='datacontainer'>
                 <h1>Clients</h1>
-                <div class='item' v-for="(item, index) in clients">{{item.id}}</div>
+                <div class='scoll'>
+                <div class='container'>
+                <div :class="index == selectedClient ? 'itemselected' : 'item'" v-for="(item, index) in clients" v-if="item != null" @click="onClickClient(item, index)">{{item.name}}</div>
+                </div>
+                </div>
             </div>
             <div class='datacontainer messages'>
                 <h1>Messages</h1>
-                <div class='item' v-for="(item, index) in messageLog">{{item.message}}</div>
+                <div class='scoll'>
+                    <div class='container'>
+                        <div class='item' v-for="(item, index) in messageLog">{{item.time}} - {{item.message}}</div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="sendbox">
+            <div class="targetbox"><p>Sending to {{sendTarget}}</p></div>
             <input ref='input'></input>
             <button @click='onClickSend'>SEND</button>
         </div>
@@ -25,7 +38,7 @@
             </p>
 
             <p style="left:unset;right:20px">
-                {{connections}}
+                {{getConnectionsText()}}
             </p>
         </div>
     </div>    
@@ -35,6 +48,12 @@
 export default {
 
     data: () => ({
+
+        selectedRoom:0,
+        selectedClient:-1,
+
+        sendTarget:"[ all ]",
+
         connections:0,
         messageLog:[],
         rooms:[],
@@ -50,9 +69,9 @@ export default {
 
         this.$nextTick(() => {
 
-            this.app.on('connect', (server) => { if (server.id == this.server.id) this.updateConnections() } )
-            this.app.on('close', (server) => { if (server.id == this.server.id) this.updateConnections() } )
-            this.app.on('message', (server) => { if (server.id == this.server.id) this.updateMessages() } )
+            this.app.on('connect', (server) => { if (server.id == this.server.id) this.updateAll() } )
+            this.app.on('close', (server) => { if (server.id == this.server.id) this.updateAll() } )
+            this.app.on('message', (server) => { if (server.id == this.server.id) this.updateAll() } )
 
             this.$nextTick(() => {
                 this.updateAll();
@@ -66,6 +85,22 @@ export default {
 
     methods : {
 
+        onClickClient: function(client, index)
+        {
+            this.selectedClient = index;
+            let room = this.server.rooms[this.selectedRoom];
+            this.sendTarget = "[ " + room.name + " ] > " + client.name;
+        },
+
+        onClickRoom: function(room, index)
+        {
+            this.selectedRoom = index;
+            this.selectedClient = -1;
+            this.clients = room.clients;
+
+            this.sendTarget = "[ " + room.name + " ]";
+       },
+
         updateAll: function()
         {
             this.updateRooms();
@@ -76,14 +111,18 @@ export default {
         updateConnections: function()
         {
             this.connections = this.server.server.clients.length;
+            this.clients = this.rooms[this.selectedRoom].clients;
         },
 
         updateRooms: function()
         {
-            this.rooms = this.server.rooms;
-            console.log("clients === ");
-            console.log(this.rooms[0].clients);
-            this.clients = this.rooms[0].clients;
+            this.rooms = [this.server.defaultRoom];
+            for (let i = 0; i < this.server.rooms.length; i++)
+            {
+                let r = this.server.rooms[i];
+                this.rooms.push(r);
+            }
+            this.clients = this.rooms[this.selectedRoom].clients;
         },
 
         updateMessages: function()
@@ -107,11 +146,23 @@ export default {
         onClickSend: function()
         {
             let data = this.$refs.input.value.trim();
-            if (this.server != null && data.length > 0)
+            if (this.server == null || data.length == 0) return;
+            
+            let list = [];
+            if (this.selectedClient > 0)
             {
-                this.server.send(data);
+                list.push(this.clients[this.selectedClient]);
             }
-            this.$refs.input.value = "";
+            else
+            {
+                list = this.clients;
+            }
+
+            for (let i = 0; i < list.length; i++)
+            {
+                console.log("sending to " + list[i].id);
+                this.server.send(data, list[i]);
+            }
         }
     }
     
@@ -158,11 +209,19 @@ export default {
         .columns {
             position:relative;
             display: flex;
-            height:calc(100% - 128px);
+            height:calc(100% - 164px);
             padding-left:20px;
             padding-right:20px;
             padding-top:32px;
             padding-bottom: 10px;
+        }
+
+        .scoll {
+            position:relative;
+            width: 100%;
+            height:100%;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         .datacontainer {
@@ -171,6 +230,16 @@ export default {
             height:100%;
             width: 200px;
             margin-right:10px;
+            
+            color: black;
+
+            container {
+                position:relative;
+                height:100%;
+                width: 100%;
+            }
+
+
             h1 {
                 position:absolute;
                 top:-25px;
@@ -179,6 +248,7 @@ export default {
                 padding: 0;
                 font-size: 14px;
                 font-weight: 100;
+                color:black;
 
             }
 
@@ -188,9 +258,20 @@ export default {
             }
 
             .item:hover {
-                padding:4px;
                 background-color: rgba(255, 255, 255, 0.4);
             }
+
+            .itemselected {
+                padding:4px;
+                cursor: pointer;
+                background-color: rgba(255, 255, 255, 0.25);
+            }
+
+            .itemselected:hover {
+                background-color: rgba(255, 255, 255, 0.6);
+            }
+
+            
         }
 
         .messages {
@@ -201,14 +282,28 @@ export default {
 
         .sendbox {
             position: relative;
-            height:32px;
+            height:64px;
             width:calc(100% - 40px);
             margin-left:20px;
             margin-right:20px;
 
+            .targetbox
+            {
+                position:absolute;
+                top:0px;
+                left:0px;
+                color:black;
+                p {
+                    margin:0; padding: 0;
+                }
+            }
+
             input {
+                position: absolute;
+                bottom:0px;
+                
                 width:calc(100% - 125px);
-                height: calc(100% - 4px);
+                height: calc(32px - 4px);
                 padding:0;
                 padding-left:10px;
                 margin:0;
@@ -216,9 +311,9 @@ export default {
 
             button {
                 width:100px;
-                height:100%;
+                height:32px;
                 position:absolute;
-                top:0px;
+                bottom:0px;
                 right:0px;
                 background-color: $blue;
                 border: none;

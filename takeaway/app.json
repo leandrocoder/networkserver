@@ -1,0 +1,16 @@
+{
+    "title":"Take Away Manager",
+    "script":"./script.js",
+    "server":[
+        {
+            "name":"Takeaway",
+            "type":"websocket", 
+            "port":5000, 
+            "forwardmessages":false,
+            "rooms":[
+                {"name":"camera"},
+                {"name":"input"}
+            ]
+        }
+    ]
+}
