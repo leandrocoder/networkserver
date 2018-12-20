@@ -2,7 +2,7 @@
     <div v-if="app != null && server != null" class='server'>
         <div class='topline'></div>
         <div class='columns'>
-            <div class='datacontainer'>
+            <div v-if="clientServer == true" class='datacontainer'>
                 <h1>Rooms</h1>
                 <div class='scoll'>
                 <div class='container'>
@@ -10,7 +10,7 @@
                 </div>
                 </div>
             </div>
-            <div class='datacontainer'>
+            <div v-if="clientServer == true"class='datacontainer'>
                 <h1>Clients</h1>
                 <div class='scoll'>
                 <div class='container'>
@@ -51,8 +51,8 @@ export default {
 
         selectedRoom:0,
         selectedClient:-1,
-
         sendTarget:"[ all ]",
+        clientServer:false,
 
         connections:0,
         messageLog:[],
@@ -69,13 +69,19 @@ export default {
 
         this.$nextTick(() => {
 
+            
+
             this.app.on('connect', (server) => { if (server.id == this.server.id) this.updateAll() } )
             this.app.on('close', (server) => { if (server.id == this.server.id) this.updateAll() } )
             this.app.on('message', (server) => { if (server.id == this.server.id) this.updateAll() } )
 
             this.$nextTick(() => {
+                console.log('server type', this.server.config.type);
+        
                 this.updateAll();
             })
+
+            
         })
     },
 
@@ -84,6 +90,13 @@ export default {
     },
 
     methods : {
+
+        isClientServer: function()
+        {
+            this.clientServer = this.server.config.type != 'udp';
+            console.log('isclient server?', this.clientServer)
+            return this.clientServer;
+        },
 
         onClickClient: function(client, index)
         {
@@ -110,19 +123,23 @@ export default {
 
         updateConnections: function()
         {
+            console.log('updateConnections:', this.isClientServer(), this.server.config.type)
+            if (this.isClientServer() == false) return;
             this.connections = this.server.server.clients.length;
             this.clients = this.rooms[this.selectedRoom].clients;
         },
 
         updateRooms: function()
         {
+            if (this.isClientServer() == false) return;
             this.rooms = [this.server.defaultRoom];
             for (let i = 0; i < this.server.rooms.length; i++)
             {
                 let r = this.server.rooms[i];
                 this.rooms.push(r);
             }
-            this.clients = this.rooms[this.selectedRoom].clients;
+            let r = this.rooms[this.selectedRoom];
+            this.clients = r ? this.rooms[this.selectedRoom].clients : [];
         },
 
         updateMessages: function()
@@ -132,6 +149,8 @@ export default {
 
         getConnectionsText: function()
         {
+            if (this.clientServer == false) return "";
+
             let size = this.connections;
             return size + ' connection' + (size != 1 ? 's' : '');
         },

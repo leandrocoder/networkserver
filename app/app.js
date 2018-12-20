@@ -1,4 +1,5 @@
 const LCNetServer = require('lcnet/server');
+const UDP = require('lcnet/udp');
 const EventEmitter = require('events');
 
 class Room  extends EventEmitter
@@ -54,18 +55,34 @@ module.exports = class App extends EventEmitter
 
         for (let i = 0; i < config.server.length; i++)
         {
-            if (config.server[i].type == 'websocket')
+            if (config.server[i].type == 'udp')
             {
-
+                let s = new UDP();
+                s.config = config.server[i];
+                s.id = i;
+                s.clients = [];
+                s.messageLog = [];
+                s.rooms = [];
+                s.name = s.config.name;
+                s.server = {};
+                s.server.type = 'udp';
+                s.server.ip = s.getLocalIP();
+                s.addListener(config.server[i].port, (data, sender) => {
+                    console.log("remote:", sender);
+                    this.onMessage(s, data, sender)
+                })
+                this.server.push(s);
+            }
+            else if (config.server[i].type == 'websocket')
+            {
                 let s = new LCNetServer(config.server[i].type, config.server[i].port);
                 s.config = config.server[i];
                 s.id = i;
                 s.clients = [];
                 s.messageLog = [];
                 s.rooms = [];
-                s.name = "[ all ]";
+                s.name = s.config.name;
                 s.defaultRoom = new Room('all');
-
                 s.getRoom = function(name)
                 {
                     for (let j = 0; j < s.rooms.length; j++)
@@ -114,7 +131,7 @@ module.exports = class App extends EventEmitter
     
     onMessage(server, data, sender)
     {
-        console.log("message >", data);
+        console.log(server.config.type, "message >", data);
 
         console.log("type of message = ", typeof data);
 
@@ -137,6 +154,25 @@ module.exports = class App extends EventEmitter
             else if (json.leaveroom)
             {
                 if (sender.room) sender.room.removeClient(sender);
+            }
+            else if (json.requestconnection)
+            {
+                // this one need to be passed to all servers created
+
+                for (let i = 0; i < this.server.length; i++)   
+                {
+                    let s = this.server[i];
+                    console.log('name???', s.name, json.requestconnection);
+                    if (s.name == json.requestconnection)
+                    {
+                        let response = {type:'connectiondata',  data:{type:s.type, host:s.ip, port:s.port}};
+                        console.log("CONNECTION DATA =================");
+                        console.log(response);
+                        console.log(sender);
+                        server.send(response);
+                    }
+                }
+                
             }
         }
         

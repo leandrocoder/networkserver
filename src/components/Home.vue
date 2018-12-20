@@ -66,6 +66,9 @@ export default {
 		updateServerData: function()
 		{
 			this.server = this.app.server[this.currentServerIndex];
+			this.$refs.server.selectedRoom = 0;
+        	this.$refs.server.selectedClient = -1;
+        	this.$refs.server.sendTarget = "[ all ]",
 			this.$nextTick(() => {
 
 				this.$refs.server.updateAll();
