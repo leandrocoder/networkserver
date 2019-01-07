@@ -1,6 +1,6 @@
 <template>
     <div v-if="app != null && server != null" class='server'>
-        <div class='topline'></div>
+        
         <div class='columns'>
             <div v-if="clientServer == true" class='datacontainer'>
                 <h1>Rooms</h1>
@@ -69,19 +69,15 @@ export default {
 
         this.$nextTick(() => {
 
-            
-
             this.app.on('connect', (server) => { if (server.id == this.server.id) this.updateAll() } )
             this.app.on('close', (server) => { if (server.id == this.server.id) this.updateAll() } )
             this.app.on('message', (server) => { if (server.id == this.server.id) this.updateAll() } )
 
             this.$nextTick(() => {
-                console.log('server type', this.server.config.type);
-        
-                this.updateAll();
+                //console.log('server type', this.server.config.type);
+                if (this.server != null)
+                    this.updateAll();
             })
-
-            
         })
     },
 
@@ -94,7 +90,6 @@ export default {
         isClientServer: function()
         {
             this.clientServer = this.server.config.type != 'udp';
-            console.log('isclient server?', this.clientServer)
             return this.clientServer;
         },
 
@@ -123,7 +118,7 @@ export default {
 
         updateConnections: function()
         {
-            console.log('updateConnections:', this.isClientServer(), this.server.config.type)
+            //console.log('updateConnections:', this.isClientServer(), this.server.config.type)
             if (this.isClientServer() == false) return;
             this.connections = this.server.server.clients.length;
             this.clients = this.rooms[this.selectedRoom].clients;
@@ -195,17 +190,11 @@ export default {
     $white:#ffffff;
 
     .server {
-        position:absolute;
+        position:relative;
         top:0px;
         left:0px;
         width:100%;
-        height:100%;
-
-        .topline {
-            width: 100vw;
-            height:10px;
-            background-color: $blue;
-        }
+        min-height:200%;
 
         .footer {
             position:absolute;

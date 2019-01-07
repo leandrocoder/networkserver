@@ -21,7 +21,7 @@ function initElectronView()
             minHeight:  500,
             width:      800,
             height:     500,
-            frame:      false
+            frame:      true
         })
         //win.loadFile('index.html');
         win.setMenu(null);
@@ -31,6 +31,8 @@ function initElectronView()
         win.on('closed', () => {
             win = null
         })
+
+        win.webContents.executeJavaScript("window.electronFlag=true;");
 
         main(win);
     }

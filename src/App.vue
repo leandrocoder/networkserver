@@ -1,19 +1,18 @@
 <template>
   <div id="app" class='selectDisable'>
-    <!-- <hello /> -->
     <home />
   </div>
 </template>
 
 <script>
-import Hello from './components/Hello.vue'
+
 import Home from './components/Home.vue'
 
 export default {
-  name: 'app',
-  components: {
-    Hello, Home
-  }
+	name: 'app',
+	components: {
+		Home
+	}
 }
 </script>
 

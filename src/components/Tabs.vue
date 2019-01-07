@@ -1,20 +1,20 @@
 <template>
-    <div class='tabs'>
+    <div class='tabsroot'>
+        <div class='tabs'>
 
-        
 
-        <div v-for="(item, index) in value" :class="'tab' + (active == index ? ' active' : '')" @click="onClickTab(index)">
-            <p>{{item}}</p>
+            <div v-for="(item, index) in value" :class="'tab' + (active == index ? ' active' : '')" @click="onClickTab(index)">
+                <p>{{item}}</p>
+            </div>
+
+            <div :class="'tab' + (active == -1 ? ' active' : '')" @click="onClickTab(value.length)" style="min-width: unset; width:64px;">
+                <p>+</p>
+            </div>
+
+            <div class='bg' ref='bg'></div>
+
         </div>
-
-        <div class='bg' ref='bg'></div>
-
-        <div class="windowbuttons">
-            <div @click="minimize" class='winbtn' style="background-color:#ffba3c"><p>-</p></div>
-            <div @click="close" class='winbtn' style="background-color:#ff5e5b;"><p>X</p></div>
-        </div>
-
-
+        <div class='topline'></div>
     </div>
 </template>
 
@@ -65,6 +65,20 @@ export default {
 
     $blue: #4688F4;
     $darkBlue: #203F70;
+
+    .tabsroot {
+        position:relative;
+        width: 100vw;
+        height:40px;
+    }
+
+    .topline {
+        position:absolute;
+        width: 100vw;
+        height:10px;
+        background-color: $blue;
+        bottom: 0px;
+    }
 
     .tabs {
         position:absolute;

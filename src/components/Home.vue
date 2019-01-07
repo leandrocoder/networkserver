@@ -1,7 +1,8 @@
 <template>
 	<div class='home' v-if="app != null">
 		<tabs :value="tabs" :active="currentServerIndex" @click='onClickTab' />
-		<server ref='server' class="servercontainer" :app="app" :server="server" />
+		<server v-if='creatingNew == false' ref='server' class="servercontainer" :app="app" :server="server" />
+		<new-tab v-if='creatingNew == true' class="servercontainer" />
 	</div>
 </template>
 
@@ -9,6 +10,7 @@
 
 import Tabs from "./Tabs.vue";
 import Server from "./Server.vue";
+import NewTab from "./NewTab.vue";
 import Path from 'path';
 import FS from 'fs';
 
@@ -21,11 +23,13 @@ export default {
 		app:null,
 		currentServerIndex:0,
 		server:null,
-		tabs:[]
+		tabs:[],
+
+		creatingNew:false
 	}),
 	
 	components: {
-		Tabs, Server
+		Tabs, Server, NewTab
 	},
 
 	mounted() {
@@ -47,7 +51,7 @@ export default {
 		}
 
 		this.currentServerIndex = 0;
-			console.log('server length:', this.app.server.length);
+		console.log('server length:', this.app.server.length);
 
 		this.$nextTick(() => {
 			this.updateServerData();
@@ -59,19 +63,33 @@ export default {
 	methods: {
 		onClickTab: function(index)
 		{
-			this.currentServerIndex = index;
-			this.updateServerData();
+			console.log('click tab', index);
+			this.creatingNew = false;
+			if (index < this.tabs.length) {				
+				this.currentServerIndex = index;
+				this.updateServerData();
+			}
+			else
+			{
+				this.creatingNew = true;
+				this.server = null;
+				this.currentServerIndex = -1;
+				console.log('create new server');
+			}
 		},
 
 		updateServerData: function()
 		{
-			this.server = this.app.server[this.currentServerIndex];
-			this.$refs.server.selectedRoom = 0;
-        	this.$refs.server.selectedClient = -1;
-        	this.$refs.server.sendTarget = "[ all ]",
 			this.$nextTick(() => {
 
-				this.$refs.server.updateAll();
+				this.server = this.app.server[this.currentServerIndex];
+				this.$refs.server.selectedRoom = 0;
+				this.$refs.server.selectedClient = -1;
+				this.$refs.server.sendTarget = "[ all ]",
+				this.$nextTick(() => {
+					
+					this.$refs.server.updateAll();
+				});
 			});
 		}
 	}
@@ -83,11 +101,13 @@ export default {
 	.home {
 
 		.servercontainer {
-			position:absolute;
-			top:32px;
-			height:calc(100vh - 32px);
+			position:relative;
+			height:calc(100vh - 40px);
 			width:100vw;
 			background-color: white;
+
+			overflow-x: hidden;
+			overflow-y: auto;
 		}
 	}
 </style>
