@@ -51,61 +51,93 @@ module.exports = class App extends EventEmitter
     constructor(config)
     {
         super();
-        this.server = [];
 
+        this.checkPort(3010, (isFree) => {
+            console.log(`port ${3010} is ${isFree}`);
+        });
+
+        this.server = [];
         for (let i = 0; i < config.server.length; i++)
         {
-            if (config.server[i].type == 'udp')
-            {
-                let s = new UDP();
-                s.config = config.server[i];
-                s.id = i;
-                s.clients = [];
-                s.messageLog = [];
-                s.rooms = [];
-                s.name = s.config.name;
-                s.server = {};
-                s.server.type = 'udp';
-                s.server.ip = s.getLocalIP();
-                s.addListener(config.server[i].port, (data, sender) => {
-                    console.log("remote:", sender);
-                    this.onMessage(s, data, sender)
-                })
-                this.server.push(s);
+            this.addServer(config.server[i]);
+        }
+    }
+
+    checkPort(port, callback)
+    {
+        if (!callback) return;
+
+        var net = require('net');
+        var server = net.createServer();
+        
+        server.once('error', function(err) {
+            if (err.code === 'EADDRINUSE') {
+                // port is currently in use
             }
-            else if (config.server[i].type == 'websocket')
+            if (callback) callback(false);
+        });
+        
+        server.once('listening', function() {
+            // close the server if listening doesn't fail
+            server.close();
+            if (callback) callback(true);
+        });
+
+        server.listen(port);
+    }
+
+    addServer(config)
+    {
+        if (config.type == 'udp')
+        {
+            let s = new UDP();
+            s.config = config;
+            s.id = this.server.length;
+            s.clients = [];
+            s.messageLog = [];
+            s.rooms = [];
+            s.name = s.config.name;
+            s.server = {};
+            s.server.type = 'udp';
+            s.server.ip = s.getLocalIP();
+            s.addListener(config.port, (data, sender) => {
+                console.log("remote:", sender);
+                this.onMessage(s, data, sender)
+            })
+            this.server.push(s);
+        }
+        else if (config.type == 'websocket')
+        {
+            let s = new LCNetServer(config.type, config.port);
+            s.config = config;
+            s.id = this.server.length;
+            s.clients = [];
+            s.messageLog = [];
+            s.rooms = [];
+            s.name = config.name;
+            s.defaultRoom = new Room('all');
+            s.getRoom = function(name)
             {
-                let s = new LCNetServer(config.server[i].type, config.server[i].port);
-                s.config = config.server[i];
-                s.id = i;
-                s.clients = [];
-                s.messageLog = [];
-                s.rooms = [];
-                s.name = s.config.name;
-                s.defaultRoom = new Room('all');
-                s.getRoom = function(name)
+                for (let j = 0; j < s.rooms.length; j++)
                 {
-                    for (let j = 0; j < s.rooms.length; j++)
+                    if (s.rooms[j].name == name)
                     {
-                        if (s.rooms[j].name == name)
-                        {
-                            return s.rooms[j];
-                        }
+                        return s.rooms[j];
                     }
-                    return null;
                 }
-
-                for (let j = 0; j < s.config.rooms.length; j++)
-                {
-                    s.rooms.push(new Room(s.config.rooms[j].name));
-                }       
-
-                s.forwardMessages = config.server[i].forwardmessages
-                s.on("connect", (client) => this.onConnect(s, client))
-                s.on("close", (client) => this.onClose(s, client))
-                s.on("message", (data, sender) => this.onMessage(s, data, sender))
-                this.server.push(s);
+                return null;
             }
+
+            for (let j = 0; j < config.rooms.length; j++)
+            {
+                s.rooms.push(new Room(config.rooms[j].name));
+            }       
+
+            s.forwardMessages = config.forwardmessages
+            s.on("connect", (client) => this.onConnect(s, client))
+            s.on("close", (client) => this.onClose(s, client))
+            s.on("message", (data, sender) => this.onMessage(s, data, sender))
+            this.server.push(s);
         }
     }
 

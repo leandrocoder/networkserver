@@ -32,8 +32,6 @@ function initElectronView()
             win = null
         })
 
-        win.webContents.executeJavaScript("window.electronFlag=true;");
-
         main(win);
     }
 
@@ -69,8 +67,8 @@ function main(electronWindow)
    global.args = [...process.argv];
    global.args.unshift(__dirname);
    global.config = Config;
+   global.electronWindow = electronWindow;
    global.extension = {};
-
    
    // LOAD EXTENSION
    if (global.args.length >= 4)

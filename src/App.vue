@@ -1,6 +1,6 @@
 <template>
   <div id="app" class='selectDisable'>
-    <home />
+    <router-view></router-view>
   </div>
 </template>
 

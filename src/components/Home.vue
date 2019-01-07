@@ -2,7 +2,8 @@
 	<div class='home' v-if="app != null">
 		<tabs :value="tabs" :active="currentServerIndex" @click='onClickTab' />
 		<server v-if='creatingNew == false' ref='server' class="servercontainer" :app="app" :server="server" />
-		<new-tab v-if='creatingNew == true' class="servercontainer" />
+		<new-tab v-if='creatingNew == true' class="servercontainer" @add='createNewServer' />
+		<msg-box ref='msgbox' />
 	</div>
 </template>
 
@@ -13,6 +14,8 @@ import Server from "./Server.vue";
 import NewTab from "./NewTab.vue";
 import Path from 'path';
 import FS from 'fs';
+
+import MsgBox from './MessageBox.vue';
 
 const remote = window.require('electron').remote;
 
@@ -29,10 +32,12 @@ export default {
 	}),
 	
 	components: {
-		Tabs, Server, NewTab
+		Tabs, Server, NewTab, MsgBox
 	},
 
 	mounted() {
+
+		//this.$refs.msgbox.style.display = 'none';
 		
 		this.app = remote.getGlobal('app');
 
@@ -44,11 +49,7 @@ export default {
 			}
 		});
 
-		this.tabs = [];
-		for (let i = 0; i < this.app.server.length; i++)
-		{
-			this.tabs.push(this.app.server[i].config.name);
-		}
+		this.updateTabs();
 
 		this.currentServerIndex = 0;
 		console.log('server length:', this.app.server.length);
@@ -61,20 +62,46 @@ export default {
 	},
 
 	methods: {
+
+		msgBox: function()
+		{
+			this.$refs.msgBox[0].style.display = 'block';
+		},
+
+		updateTabs: function()
+		{
+			this.tabs = [];
+			for (let i = 0; i < this.app.server.length; i++)
+			{
+				this.tabs.push(this.app.server[i].config.name);
+			}
+		},
+
+		createNewServer: function(config)
+		{
+            this.app.addServer(config);
+			this.updateTabs();
+			this.$nextTick(() => {
+				this.onClickTab(this.tabs.length - 1);		
+			});
+		},
+
 		onClickTab: function(index)
 		{
 			console.log('click tab', index);
 			this.creatingNew = false;
-			if (index < this.tabs.length) {				
-				this.currentServerIndex = index;
-				this.updateServerData();
-			}
-			else
+
+			if (index < 0)
 			{
 				this.creatingNew = true;
 				this.server = null;
 				this.currentServerIndex = -1;
 				console.log('create new server');
+			}
+			else {
+				
+				this.currentServerIndex = index;
+				this.updateServerData();
 			}
 		},
 

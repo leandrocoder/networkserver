@@ -7,7 +7,7 @@
                 <p>{{item}}</p>
             </div>
 
-            <div :class="'tab' + (active == -1 ? ' active' : '')" @click="onClickTab(value.length)" style="min-width: unset; width:64px;">
+            <div class="add" @click="onClickTab(-1)">
                 <p>+</p>
             </div>
 
@@ -146,6 +146,25 @@ export default {
             min-width: 128px;
             height:100%;
             background-color: $darkBlue;
+            margin-right:5px;
+            cursor: pointer;
+
+            p {
+                position:absolute;
+                top:50%;
+                left:10px;
+                transform: translateY(-50%);
+                margin:0;
+                padding: 0;
+            }
+        }
+
+        .add {
+            position: relative;
+            width:32px;
+            min-width: 32px;
+            height:100%;
+            background-color: #ddd;
             margin-right:5px;
             cursor: pointer;
 
