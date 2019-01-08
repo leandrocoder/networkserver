@@ -1,22 +1,25 @@
 <template>
-    <div>
-    <div class='newtab'>
-        <h3>New server</h3>
-        <p>Type</p>
-        <input ref='name' value="New Server" /><br>
-        <select ref='socketType'>
-            <option value="websocket">WebSocket</option>
-            <option value="tcp">TCP</option>
-            <option value="udp">UDP</option>
-        </select>
-        <br>
-        <input ref='port' value="5000" /><br>
-        <checkbox ref="forwardMessages">Auto Forward Messages</checkbox>
-        <br>
-        <button @click='onClickCreate'>Create</button><br><br>
-        <button @click='onClickShowError'>Show Error</button>
-        <p v-for="(index, value) in 2">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sit amet lacinia turpis. Mauris et tortor ultricies, varius nibh ac, dignissim mauris. Duis diam nulla, lobortis non rhoncus eget, sodales quis libero. Duis lacinia a risus eget vehicula. Nullam malesuada nunc quis semper ultrices. Sed sapien lorem, tristique non nibh vel, vestibulum tristique diam. Praesent nisi mauris, congue nec magna vel, malesuada consequat risus.</p>
-    </div>    
+    <div class='bg'>
+        <div class='newtab' v-if='false'>
+            <h3>New server</h3>
+            <p>Type</p>
+            <input ref='name' value="New Server" /><br>
+            <select ref='socketType'>
+                <option value="websocket">WebSocket</option>
+                <option value="tcp">TCP</option>
+                <option value="udp">UDP</option>
+            </select>
+            <br>
+            <input ref='port' value="5000" /><br>
+            <checkbox ref="forwardMessages">Auto Forward Messages</checkbox>
+            <br>
+            <button @click='onClickCreate'>Create</button><br><br>
+            <button @click='onClickShowError'>Show Error</button>
+            <p v-for="(index, value) in 2">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sit amet lacinia turpis. Mauris et tortor ultricies, varius nibh ac, dignissim mauris. Duis diam nulla, lobortis non rhoncus eget, sodales quis libero. Duis lacinia a risus eget vehicula. Nullam malesuada nunc quis semper ultrices. Sed sapien lorem, tristique non nibh vel, vestibulum tristique diam. Praesent nisi mauris, congue nec magna vel, malesuada consequat risus.</p>
+        </div>    
+        <div class='newtabwait'>
+            <h3>Creation of custom server</h3>
+        </div>
     </div>    
 </template>
 
@@ -88,6 +91,7 @@ export default {
 
     $blue: #4688F4;
 
+
     .newtab {
         position:absolute;
         top:0px;
@@ -112,6 +116,24 @@ export default {
     button:focus {
         border: none;
         outline: none;
+    }
+
+    .newtabwait {
+
+        position:absolute;
+        top:0px;
+        left:0px;
+        width: calc(100% - 40px);
+        height:100%;
+
+        h3 {
+            position:absolute;
+            top:calc(50% - 25px);
+            font-size: 12px;
+            left:50%;
+            transform: translate(-50%, -50%);
+        }
+
     }
 </style>
 

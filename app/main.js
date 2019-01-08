@@ -1,4 +1,4 @@
-const App = require('./app.js');
+const { NetManager } = require('lcnet/server');
 const Config = require("./config.json");
 const Path = require('path');
 const FS = require('fs');
@@ -23,10 +23,24 @@ function initElectronView()
             height:     500,
             frame:      true
         })
+
+
+		let isDev = [...process.argv].indexOf('-dev') > -1;
+
+		if (isDev)
+		{
+            win.loadURL('http://localhost:8080/');
+            win.webContents.openDevTools();
+		}
+		else
+		{
+			win.loadFile('./view/index.html');
+		}
+		
         //win.loadFile('index.html');
         win.setMenu(null);
-        win.loadURL('http://localhost:8080/') 
-        win.webContents.openDevTools();
+        
+        
         win.setTitle("Server");
         win.on('closed', () => {
             win = null
@@ -64,30 +78,36 @@ else
 
 function main(electronWindow)
 {
-   global.args = [...process.argv];
-   global.args.unshift(__dirname);
-   global.config = Config;
-   global.electronWindow = electronWindow;
-   global.extension = {};
-   
-   // LOAD EXTENSION
-   if (global.args.length >= 4)
-   {
-       global.extension.path = Path.join(__dirname, global.args[3]);
-       global.extension.config = require(Path.join(global.extension.path, "app.json"));
-       global.extension.scriptPath = Path.join(global.extension.path, global.extension.config.script);
-       global.extension.scriptClass = require(global.extension.scriptPath);
+    global.args = [...process.argv];
+    global.args.unshift(__dirname);
+    global.config = Config;
+    global.electronWindow = electronWindow;
+    global.extension = {};
+
+    // LOAD EXTENSION
+    if (false && global.args.length >= 4)
+    {
+        global.extension.path = Path.join(__dirname, global.args[3]);
+        global.extension.config = require(Path.join(global.extension.path, "app.json"));
+        global.extension.scriptPath = Path.join(global.extension.path, global.extension.config.script);
+        global.extension.scriptClass = require(global.extension.scriptPath);
+        global.extension.viewPage =  global.extension.config.view ? Path.join(global.extension.path, global.extension.config.view) : null;
 
         if (global.extension.config && global.extension.config.server)
         {
             global.config.server = global.extension.config.server;
         }
 
-        console.log("==== win ====", electronWindow);
-        if (electronWindow != null) electronWindow.setTitle(global.extension.config.title);
+        if (electronWindow != null)
+        {
+            electronWindow.setTitle(global.extension.config.title);
+
+            if (global.extension.viewPage)
+                electronWindow.loadFile(global.extension.viewPage);
+        } 
     }
 
-    global.app = new App(global.config);
+    global.app = new NetManager(global.config);
     if (global.extension.scriptClass != null)
     {
         let scriptClass = global.extension.scriptClass;

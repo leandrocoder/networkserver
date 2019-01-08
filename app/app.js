@@ -52,10 +52,6 @@ module.exports = class App extends EventEmitter
     {
         super();
 
-        this.checkPort(3010, (isFree) => {
-            console.log(`port ${3010} is ${isFree}`);
-        });
-
         this.server = [];
         for (let i = 0; i < config.server.length; i++)
         {
@@ -86,60 +82,89 @@ module.exports = class App extends EventEmitter
         server.listen(port);
     }
 
-    addServer(config)
+    addServer(_config)
     {
-        if (config.type == 'udp')
+        let self = this;
+
+        let __addServer = function(config)
         {
-            let s = new UDP();
-            s.config = config;
-            s.id = this.server.length;
-            s.clients = [];
-            s.messageLog = [];
-            s.rooms = [];
-            s.name = s.config.name;
-            s.server = {};
-            s.server.type = 'udp';
-            s.server.ip = s.getLocalIP();
-            s.addListener(config.port, (data, sender) => {
-                console.log("remote:", sender);
-                this.onMessage(s, data, sender)
-            })
-            this.server.push(s);
-        }
-        else if (config.type == 'websocket')
-        {
-            let s = new LCNetServer(config.type, config.port);
-            s.config = config;
-            s.id = this.server.length;
-            s.clients = [];
-            s.messageLog = [];
-            s.rooms = [];
-            s.name = config.name;
-            s.defaultRoom = new Room('all');
-            s.getRoom = function(name)
+            if (config.type == 'udp')
             {
-                for (let j = 0; j < s.rooms.length; j++)
-                {
-                    if (s.rooms[j].name == name)
-                    {
-                        return s.rooms[j];
-                    }
-                }
-                return null;
+                let s = new UDP();
+                s.config = config;
+                s.id = self.server.length;
+                s.clients = [];
+                s.messageLog = [];
+                s.rooms = [];
+                s.name = s.config.name;
+                s.server = {};
+                s.server.type = 'udp';
+                s.server.ip = s.getLocalIP();
+                s.addListener(config.port, (data, sender) => {
+                    console.log("remote:", sender);
+                    self.onMessage(s, data, sender)
+                })
+                self.server.push(s);
             }
-
-            for (let j = 0; j < config.rooms.length; j++)
+            else if (config.type == 'websocket')
             {
-                s.rooms.push(new Room(config.rooms[j].name));
-            }       
-
-            s.forwardMessages = config.forwardmessages
-            s.on("connect", (client) => this.onConnect(s, client))
-            s.on("close", (client) => this.onClose(s, client))
-            s.on("message", (data, sender) => this.onMessage(s, data, sender))
-            this.server.push(s);
+                let s = new LCNetServer(config.type, config.port);
+                s.config = config;
+                s.id = self.server.length;
+                s.clients = [];
+                s.messageLog = [];
+                s.rooms = [];
+                s.name = config.name;
+                s.defaultRoom = new Room('all');
+                s.getRoom = function(name)
+                {
+                    for (let j = 0; j < s.rooms.length; j++)
+                    {
+                        if (s.rooms[j].name == name)
+                        {
+                            return s.rooms[j];
+                        }
+                    }
+                    return null;
+                }
+    
+                for (let j = 0; j < config.rooms.length; j++)
+                {
+                    s.rooms.push(new Room(config.rooms[j].name));
+                }       
+    
+                s.forwardMessages = config.forwardmessages
+                s.on("connect", (client) => self.onConnect(s, client))
+                s.on("close", (client) => self.onClose(s, client))
+                s.on("message", (data, sender) => self.onMessage(s, data, sender))
+                self.server.push(s);
+            }
         }
+
+        
+
+        let getNextFreePort = function(port, onFound)
+        {
+            self.checkPort(port, (isFree) => {
+                if (isFree)
+                {
+                    onFound(port);
+                }
+                else
+                {
+                    getNextFreePort(port + 1, onFound);
+                }
+            });
+        };
+
+        getNextFreePort(_config.port, (port) => {
+            _config.port = port;
+            __addServer(_config);
+        });
+
     }
+
+    
 
     getServer(name)
     {

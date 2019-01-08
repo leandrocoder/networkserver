@@ -19,6 +19,17 @@ export default {
 <style lang="scss">
   * {
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+  }
+
+  p {
+    font-size: 16px;
+  }
+
+  h1, h2, h3 {
+    font-size: 24px;
+    margin: 0;
+    padding: 0;
   }
 
   html, body {

@@ -27,6 +27,7 @@ export default {
     .checkbox {
         position: relative;
         cursor: pointer;
+        font-size: 16px;
     }
 
     .ignoreinput {

@@ -6,15 +6,18 @@
   "private": true,
   "main": "app.js",
   "scripts": {
-    "watchify": "watchify -vd -p browserify-hmr -e src/main.js -o dist/build.js",
-    "serve": "http-server -o -c 1 -a localhost",
-    "dev": "npm-run-all --parallel watchify serve",
-    "terminalapp": "node ./app/main.js nowindow",
-    "app": "electron ./app/ ../takeaway",
-    "devapp": "npm-run-all -p -r dev app",
+    "watchify": "watchify -vd -p browserify-hmr -e view/main.js -o app/view/build.js",
+    "serve": "http-server ./app/view/ -c 1 -a localhost",
+    "app": "electron ./app/ -dev",
+    "dev": "npm-run-all -p -r watchify serve app",
+    "cmd": "node ./app/main.js nowindow",
+    "customapp": "electron ./app/ ../takeaway",
     "test": "npm-run-all devapp",
-    "lint": "eslint --ext .js,.vue src",
-    "build": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o dist/build.css ] -e src/main.js | uglifyjs -c warnings=false -m > dist/build.js"
+    "lint": "eslint --ext .js,.vue view",
+    "postpack": "cd dist/resources/app && npm i",
+    "pack": "node pack.js",
+    "build": "cross-env NODE_ENV=production browserify -g envify -p [ vueify/plugins/extract-css -o app/view/build.css ] -e view/main.js | uglifyjs -c warnings=false -m > app/view/build.js",
+    "dist": "npm-run-all build pack"
   },
   "browserify": {
     "transform": [
@@ -33,7 +36,6 @@
     "vue": "vue/dist/vue.common.js"
   },
   "dependencies": {
-    "lcnet": "file:/jobs/github/npm-lcnet/",
     "vue": "^2.0.1",
     "vue-router": "^3.0.2"
   },
@@ -47,6 +49,8 @@
     "browserify": "^13.1.0",
     "browserify-hmr": "^0.3.1",
     "cross-env": "^2.0.0",
+    "electron": "^4.0.1",
+    "electron-packager": "^13.0.1",
     "envify": "^3.4.1",
     "eslint": "^3.3.0",
     "eslint-config-standard": "^5.3.5",
@@ -54,6 +58,7 @@
     "eslint-plugin-promise": "^2.0.1",
     "eslint-plugin-standard": "^2.0.0",
     "http-server": "^0.9.0",
+    "lcnet": "*",
     "node-sass": "^4.11.0",
     "npm-run-all": "^2.3.0",
     "proxyquireify": "^3.0.1",
